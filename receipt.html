@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="Cache-Control" content="no-cache">
+	<title>Nimbus Executive | Recibo </title>
+	<link rel="icon" type="image/png" href="images/executive-icon.png" />
+	<link rel="stylesheet" href="css/nimbus.core.css" />
+	<link rel="stylesheet" href="css/dolly.css" />
+	<link rel="stylesheet" href="lib/dhtmlxCalendar/codebase/dhtmlxcalendar.css">
+	<link rel="stylesheet" href="lib/dhtmlxCalendar/skins/terrace/dhtmlxcalendar.css">
+	<style>
+		* {padding: 0; border: 0; margin: 0;}
+		html, body {background-color: white; font-size: 11px; margin: 0 2em;}
+		p {line-height: 1.5em; margin-bottom: .5em; text-align: justify;}
+		p .first {text-transform: capitalize;}
+		#container {padding: 2em;}
+		#logo, #logo * {text-align: center; font-size: 120%;}
+		#logo img {width: 300px;}
+		#date {text-align: right;}
+		.field {margin: 3em 0;}
+		.signature {text-align: center; margin-bottom: 1em;}
+		.signlabel {text-align: center; margin-bottom: 0;}
+		[dy-instance]:last-child .semicolon {display: none;}
+		/*[accessory=show] {}
+		[accessory=hide] {display: none}*/
+ 
+ 		.header {margin-bottom: 1em;}
+ 		.header-logo img {width: 300px;}
+		.header-separator {width: 2px; background-color: #CCC}
+ 		.header-title {padding-left: 1em;}
+		.header-title h1 {font-size: 12px; font-family: 'montserrat-medium';}
+		.header-title p {margin: 0}
+		hr {border: 1px solid #666; margin-bottom: .5em;}
+		.table {width: 100%; margin-bottom: 2em; border-collapse: collapse; border: 1px solid #777;}
+		.table td {padding: 0.5em; border: 1px solid #777;;}
+		.table-key {background-color: #DDD;}
+		.table-value {font-family: 'montserrat-medium';}
+		.table-value * {font: inherit;}
+		.table-header {background-color: #000; padding: 0.5em; font-family: 'montserrat-medium';}
+		
+		input {font-size: inherit;}
+		textarea {
+			width: 100%; height: 4em; 
+			background-color: #DDD; border: 1px solid #777; 
+			margin-bottom: 2em; resize: vertical; 
+			padding: 1em; box-sizing: border-box;
+			font-size: inherit;
+		}
+		@media print {
+			#users {display: none !important;}
+		}
+		@media screen {
+			#user-print {display: none !important;}
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="js/dolly.js"></script>
+	<script src="lib/dhtmlxCalendar/codebase/dhtmlxcalendar.js"></script>
+	<script src="lib/dhtmlxCalendar/codebase/lang/es.js"></script>
+	<script>
+	$(() => {
+		const asCUIT = (str) => str.replace(/^(.{2})(.{8})(.)$/, '$1-$2-$3');
+		const calDate = new dhtmlXCalendarObject();
+		const currentUserId = 0;
+		calDate.attachObj($('#leaveDate')[0]);
+		calDate.hideTime();
+		calDate.loadUserLanguage('es');
+		calDate.setDateFormat("%d/%m/%Y");
+		
+		(new dolly.Module('', '/api/json.users.asp?apikey=314159265&verb=list&enabled=1'))
+			.parser(response => response.data.rows.sort((a, b) => a.lastName < b.lastName ? -1 : 1))
+			.on('endFetch', (me) => {
+				$('#users').append(new Option('(seleccione un usuario)', 0));
+				me.get().forEach(u => $('#users').append(new Option(u.lastName + ', ' + u.firstName, u.id, undefined, u.id == currentUserId)));
+				$('#users').on('change', (ev) => {
+					user.view('hw').clear();
+					$('#user-print').text('');
+					if ($('#users').val()) {
+						user.fetch({id: $('#users').val()});
+						$('#user-print').text($('#users option:selected').text());
+					}
+				});
+				
+			})
+			.fetch();
+
+		
+		const user = (new dolly.Module('', '/api/json.users.asp?apikey=314159265&verb=get'))
+			.parameters({id: currentUserId})
+			.parser(response => response.data)
+			.view('data', (new dolly.View('#container', 'user-data'))
+				.parser(data => data.rows[0])
+				.on('bind', (key, data, dict) => {
+					switch (key) {
+						case 'title': return dict['sex'] == 'F' ? 'Srta.' : 'Sr.';
+						case 'determ': return dict['sex'] == 'F' ? 'la' : 'el';
+						case 'employee': return dict['sex'] == 'F' ? 'empleada' : 'empleado';
+						case 'ack': return dict['sex'] == 'F' ? 'enterada' : 'enterado';
+						case 'idCard': return (new Intl.NumberFormat("es-AR").format(data));
+						case 'companyTaxId': return asCUIT(data);
+						default: return data;
+					}
+				})
+			)
+			.view('hw', (new dolly.View('#content', 'user-hw'))
+				.parser(data => data.rows[0].hw.filter(hw => hw.lent))
+				.on('bind', (key, data, dict) => {
+					switch (key) {
+						case 'type': return data.toLowerCase();
+						case 'accessory': return dict['typeId'] == 'PTB' ? 'Cargador' : '-';
+						default: return data;
+					}
+				})
+			)
+			.on('endFetch', () => {
+				$('a').on('click', (ev) => {
+					$(ev.currentTarget).css('display', 'none');
+				});
+			});
+		if (currentUserId)
+			user.fetch();
+	});
+	</script>
+</head>
+<body>
+	<div id="container" dy-template='user-data'>
+		<table class="header">
+			<tr>
+				<td class="header-logo"><img src="header.jpg" /></td>
+				<td class="header-separator"></td>
+				<td class="header-title">
+					<h1>FORMULARIO DE DEVOLUCION DE EQUIPOS</h1>
+					<p>Proceso de egreso</p>
+				</td>
+			</div>
+		</table>
+		<p>DATOS DEL COLABORADOR</p>
+		<hr>
+		<table class="table">
+			<tr>
+				<td class="table-key">Apellido y nombre</td>
+				<!-- td class="table-value" dy-bind="[[lastName]], [[firstName]]"></td -->
+				<td class="table-value"><select id="users"></select><span id="user-print"></span></td>
+				<td class="table-key">DNI Nº</td>
+				<td class="table-value"><input id="dni" type="text" dy-bind="value:[[idCard]]" pattern="[0-9]{8}" /></td>
+			</tr>
+			<tr>
+				<td class="table-key">Sector/Area</td>
+				<td class="table-value" dy-bind="[[sector]]"></td>
+				<td class="table-key">Legajo Nº</td>
+				<td class="table-value"><input id="file" type="text" dy-bind="value:[[file]]" /></td>
+			</tr>
+			<tr>
+				<td class="table-key">Jefe directo</td>
+				<td class="table-value"><input id="boss" type="text" dy-bind="value:[[bossFirstName]] [[bossLastName]]" /></td>
+				<td class="table-key">Fecha de egreso</td>
+				<td class="table-value"><input id="leaveDate" type="text" placeholder="dd/mm/aaaa" /></td>
+			</tr>
+			<!-- tr>
+				<td class="table-key">Sector / Área</td>
+				<td class="table-value" dy-bind="[[sector]]"></td>
+				<td class="table-key">Fecha de ingreso</td>
+				<td class="table-value" dy-bind="[[startDate]]"></td>
+			</tr>
+			<tr>
+				<td class="table-key">Superior inmediato</td>
+				<td class="table-value" dy-bind="[[bossLastName]], [[bossFirstName]]"></td>
+				<td class="table-key">Empresa</td>
+				<td class="table-value" dy-bind="[[company]]"></td>
+			</tr -->
+		</table>
+		<p>DETALLE DE EQUIPOS ENTREGADOS</p>
+		<hr>
+		<table id="content" class="table">
+			<tr>
+				<th class="table-header">Equipo</th>
+				<th class="table-header">Marca y modelo</th>
+				<th class="table-header">Número de serie</th>
+				<th class="table-header">Accesorios incluídos</th>
+				<th class="table-header">Entregado</th>
+			</tr>
+			<tr dy-template="user-hw" dy-clone="true">
+				<td class="table-cell" dy-bind="[[type]]"></td>
+				<td class="table-cell" dy-bind="[[brand]] [[model]]"></td>
+				<td class="table-cell" dy-bind="[[serial]]"></td>
+				<td class="table-cell" dy-bind="[[accessory]]"></td>
+				<td class="table-cell"></td>
+			</tr>
+		</table>
+		<p>Entregado: marcar con una X si fue recibido.</p>
+		<p>OBSERVACIONES</p>
+		<textarea></textarea>
+		<table class="table">
+			<tr>
+				<td>
+					<p>DECLARACIÓN DEL COLABORADOR</p>
+					<p>El/la colaborador/a declara:</p>
+					<ul style="list-style-position: inside">
+						<li>Haber devuelto la totalidad de los bienes detallados en este formulario.</li>
+						<li>No conservar en su poder equipos, documentación ni información perteneciente a la compañía.</li>
+						<li>Mantener la confidencialidad de la información a la que tuvo acceso durante su relación laboral.</li>
+						<li>Que la información consignada en este formulario es fiel y verdadera.</li>
+					</ul>
+				</td>
+			</tr>
+		</table>
+		<p>FIRMAS</p>
+		<hr>
+		<p class="field">Firma empleado y aclaración:</p>
+		<p class="signlabel">_____________________________________________________________</p>
+		<p class="signature">                         Colaborador                         </p>
+		<p class="signature">Aclaración: _________________________________________________</p>
+		<p class="signature">Fecha: ___ / ___ / ______</p>
+		<hr>
+		<p class="signature">PEOPLE people@atlantida.com.ar Atlántida</p>
+	</div>
+</body>
+</html>
