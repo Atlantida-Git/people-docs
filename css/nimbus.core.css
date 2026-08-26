@@ -1,0 +1,34 @@
+@charset "UTF-8";
+
+/* Estilos basicos */
+
+* {margin: 0; padding: 0; border: 0; box-sizing: border-box;}
+
+@font-face {font-family: 'montserrat'; src: url('Montserrat-Light.woff') format('woff');}
+@font-face {font-family: 'montserrat-regular'; src: url('Montserrat-Regular.woff') format('woff');}
+@font-face {font-family: 'montserrat-medium'; src: url('Montserrat-Medium.woff') format('woff');}
+@font-face {font-family: 'montserrat-black'; src: url('Montserrat-Black.woff') format('woff');}
+
+@font-face {font-family: 'montserrat-alt'; src: url('MontserratAlternates-Regular.woff') format('woff');}
+@font-face {font-family: 'montserrat-alt-thin'; src: url('MontserratAlternates-Thin.woff') format('woff');}
+@font-face {font-family: 'montserrat-alt-light'; src: url('MontserratAlternates-Light.woff') format('woff');}
+
+@font-face {
+    font-family: 'IDAHC39M Code 39 Barcode'; font-style: normal; font-weight: 400; src: local('IDAHC39M Code 39 Barcode'), url('https://fonts.cdnfonts.com/s/29586/IDAutomationHC39M Code 39 Barcode.woff') format('woff');
+}
+
+@keyframes enter {
+	from {opacity: 0;}
+	to {opacity: 1;}
+} 
+
+html, body {height: 100%; overflow: hidden;}
+body {
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center;
+	font: 14px 'montserrat';
+}
+a {text-decoration: none; color: inherit;}
+a:hover {text-decoration: underline;}
+img {vertical-align: middle;}
